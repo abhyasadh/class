@@ -1,7 +1,11 @@
+import 'dart:io';
+
 import 'package:flutter/material.dart';
 import 'package:flutter_riverpod/flutter_riverpod.dart';
+import 'package:image_picker/image_picker.dart';
 import 'package:multi_select_flutter/util/multi_select_item.dart';
 import 'package:multi_select_flutter/util/multi_select_list_type.dart';
+import 'package:permission_handler/permission_handler.dart';
 import 'package:student_management_hive_api/features/batch/domain/entity/batch_entity.dart';
 import 'package:student_management_hive_api/features/batch/presentation/view_model/batch_view_model.dart';
 import 'package:student_management_hive_api/features/course/presentation/view_model/course_view_model.dart';
@@ -37,6 +41,30 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
   BatchEntity? selectedBatch;
   List<CourseEntity> _listCourseSelected = [];
 
+  checkCameraPermission() async {
+    if (await Permission.camera.request().isRestricted ||
+    await Permission.camera.request().isDenied){
+      await Permission.camera.request();
+    }
+  }
+
+  File? _img;
+  Future _browseImage(ImageSource imageSource) async {
+    try {
+      final image = await ImagePicker().pickImage(source: imageSource);
+      if (image != null) {
+        setState(() {
+          _img = File(image.path);
+          // ref.read(authViewModelProvider.notifier).uploadImage(_img!);
+        });
+      } else {
+        return;
+      }
+    } catch (e) {
+      debugPrint(e.toString());
+    }
+  }
+
   @override
   Widget build(BuildContext context) {
     final batchState = ref.watch(batchViewModelProvider);
@@ -71,12 +99,19 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                             mainAxisAlignment: MainAxisAlignment.spaceAround,
                             children: [
                               ElevatedButton.icon(
-                                onPressed: () {},
+                                onPressed: () {
+                                  checkCameraPermission();
+                                  _browseImage(ImageSource.camera);
+                                  Navigator.pop(context);
+                                },
                                 icon: const Icon(Icons.camera),
                                 label: const Text('Camera'),
                               ),
                               ElevatedButton.icon(
-                                onPressed: () {},
+                                onPressed: () {
+                                  _browseImage(ImageSource.gallery);
+                                  Navigator.pop(context);
+                                },
                                 icon: const Icon(Icons.image),
                                 label: const Text('Gallery'),
                               ),
@@ -85,17 +120,17 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
                         ),
                       );
                     },
-                    child: const SizedBox(
+                    child: SizedBox(
                       height: 200,
                       width: 200,
                       child: CircleAvatar(
                         radius: 50,
-                        backgroundImage:
-                            AssetImage('assets/images/profile.png'),
-                        // backgroundImage: _img != null
-                        //     ? FileImage(_img!)
-                        //     : const AssetImage('assets/images/profile.png')
-                        //         as ImageProvider,
+                        // backgroundImage:
+                            // AssetImage('assets/images/profile.png'),
+                        backgroundImage: _img != null
+                            ? FileImage(_img!)
+                            : const AssetImage('assets/images/profile.png')
+                                as ImageProvider,
                       ),
                     ),
                   ),
