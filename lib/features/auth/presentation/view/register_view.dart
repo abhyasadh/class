@@ -12,6 +12,8 @@ import 'package:student_management_hive_api/features/course/presentation/view_mo
 import 'package:multi_select_flutter/dialog/multi_select_dialog_field.dart';
 
 import '../../../course/domain/entity/course_entity.dart';
+import '../../domain/entity/auth_entity.dart';
+import '../view_model/auth_view_model.dart';
 
 class RegisterView extends ConsumerStatefulWidget {
   const RegisterView({super.key});
@@ -55,7 +57,7 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
       if (image != null) {
         setState(() {
           _img = File(image.path);
-          // ref.read(authViewModelProvider.notifier).uploadImage(_img!);
+          ref.read(authViewModelProvider.notifier).uploadImage(_img!);
         });
       } else {
         return;
@@ -261,7 +263,24 @@ class _RegisterViewState extends ConsumerState<RegisterView> {
 
                   ElevatedButton(
                     onPressed: () {
-                      if (_key.currentState!.validate()) {}
+                      if (_key.currentState!.validate()) {
+                        final entity = AuthEntity(
+                          fname: _fnameController.text.trim(),
+                          lname: _lnameController.text.trim(),
+                          phone: _phoneController.text.trim(),
+                          batch: selectedBatch!,
+                          courses: _listCourseSelected,
+                          image:
+                          ref.read(authViewModelProvider).imageName ?? '',
+                          username:
+                          _usernameController.text.trim().toLowerCase(),
+                          password: _passwordController.text,
+                        );
+                        // Register user
+                        ref
+                            .read(authViewModelProvider.notifier)
+                            .registerStudent(entity);
+                      }
                     },
                     child: const Text('Register'),
                   ),
